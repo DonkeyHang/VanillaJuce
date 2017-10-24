@@ -1,14 +1,14 @@
 #include "GuiOscTab.h"
 
-GuiOscTab::GuiOscTab (SynthSound* pSynthSound)
-    : pSound(pSynthSound)
-    , wfLabel1("waveform label1", TRANS("Osc1 Waveform"))
-    , semiLabel1("semitone offset label1", TRANS("Pitch (semitones)"))
-    , detuneLabel1("detune label1", TRANS("Detune (cents)"))
-    , wfLabel2("waveform label2", TRANS("Osc2 Waveform"))
-    , semiLabel2("semitone offset label1", TRANS("Pitch (semitones)"))
-    , detuneLabel2("detune label1", TRANS("Detune (cents)"))
-    , oscBlendLabel("osc blend label", TRANS("Blend"))
+GuiOscTab::GuiOscTab (SynthParameters_Osc& op)
+    : oscParams(op)
+    , wfLabel1(SynthParameters_Osc::waveform1_Name, SynthParameters_Osc::waveform1_Label)
+    , semiLabel1(SynthParameters_Osc::pitchOffsetSemitones1_Name, SynthParameters_Osc::pitchOffsetSemitones1_Label)
+    , detuneLabel1(SynthParameters_Osc::detuneOffsetCents1_Name, SynthParameters_Osc::detuneOffsetCents1_Label)
+    , wfLabel2(SynthParameters_Osc::waveform2_Name, SynthParameters_Osc::waveform2_Label)
+    , semiLabel2(SynthParameters_Osc::pitchOffsetSemitones2_Name, SynthParameters_Osc::pitchOffsetSemitones2_Label)
+    , detuneLabel2(SynthParameters_Osc::detuneOffsetCents2_Name, SynthParameters_Osc::detuneOffsetCents2_Label)
+    , oscBlendLabel(SynthParameters_Osc::oscBlend_Name, SynthParameters_Osc::oscBlend_Label)
 {
     auto initLabel = [this](Label& label)
     {
@@ -36,22 +36,22 @@ GuiOscTab::GuiOscTab (SynthSound* pSynthSound)
         combo.setJustificationType(Justification::centredLeft);
         combo.setTextWhenNothingSelected("");
         combo.setTextWhenNoChoicesAvailable(TRANS("(no choices)"));
-        combo.addListener(this);
+        combo.addListener(&oscParams);
     };
 
     initCombo(waveformCB1); 
     SynthWaveform::setupComboBox(waveformCB1);
-    waveformCB1.addListener(this);
+    waveformCB1.addListener(&oscParams);
     initCombo(waveformCB2);
     SynthWaveform::setupComboBox(waveformCB2);
-    waveformCB2.addListener(this);
+    waveformCB2.addListener(&oscParams);
 
     auto initSlider = [this](Slider& slider)
     {
         addAndMakeVisible(slider);
         slider.setSliderStyle(Slider::LinearHorizontal);
         slider.setTextBoxStyle(Slider::TextBoxRight, false, 80, 20);
-        slider.addListener(this);
+        slider.addListener(&oscParams);
     };
 
     initSlider(semiSlider1); semiSlider1.setRange(-24, 24, 1);
@@ -63,16 +63,12 @@ GuiOscTab::GuiOscTab (SynthSound* pSynthSound)
     oscBlendSlider.setRange(0, 100, 1);
     oscBlendSlider.setSliderStyle(Slider::LinearVertical);
     oscBlendSlider.setTextBoxStyle(Slider::TextBoxRight, false, 40, 20);
-    oscBlendSlider.addListener(this);
+    oscBlendSlider.addListener(&oscParams);
 
-    notify();
+    oscParams.AttachControls(&waveformCB1, &waveformCB2, &semiSlider1, &semiSlider2, &detuneSlider1, &detuneSlider2, &oscBlendSlider);
+    oscParams.UpdateControlsFromWorkingValues();
 }
 
-GuiOscTab::~GuiOscTab()
-{
-}
-
-//==============================================================================
 void GuiOscTab::paint (Graphics& g)
 {
     g.fillAll (Colour (0xff323e44));
@@ -115,60 +111,4 @@ void GuiOscTab::resized()
     oscBlendLabel.setBounds(blendSliderLeft, top, labelWidth, controlHeight);
     top += controlHeight;
     oscBlendSlider.setBounds(blendSliderLeft, top, blendSliderWidth, blendSliderHeight);
-}
-
-void GuiOscTab::comboBoxChanged (ComboBox* comboBoxThatHasChanged)
-{
-    SynthParameters* pParams = pSound->pParams;
-    if (comboBoxThatHasChanged == &waveformCB1)
-    {
-        pParams->osc1Waveform.fromComboBox(*comboBoxThatHasChanged);
-    }
-    else if (comboBoxThatHasChanged == &waveformCB2)
-    {
-        pParams->osc2Waveform.fromComboBox(*comboBoxThatHasChanged);
-    }
-    pSound->parameterChanged();
-}
-
-void GuiOscTab::sliderValueChanged (Slider* sliderThatWasMoved)
-{
-    float value = (float)(sliderThatWasMoved->getValue());
-    SynthParameters* pParams = pSound->pParams;
-    if (sliderThatWasMoved == &semiSlider1)
-    {
-        pParams->osc1PitchOffsetSemitones = int(value);
-    }
-    else if (sliderThatWasMoved == &semiSlider2)
-    {
-        pParams->osc2PitchOffsetSemitones = int(value);
-    }
-    else if (sliderThatWasMoved == &detuneSlider1)
-    {
-        pParams->osc1DetuneOffsetCents = value;
-    }
-    else if (sliderThatWasMoved == &detuneSlider2)
-    {
-        pParams->osc2DetuneOffsetCents = value;
-    }
-    else if (sliderThatWasMoved == &oscBlendSlider)
-    {
-        pParams->oscBlend = 0.01f * value;
-    }
-    pSound->parameterChanged();
-}
-
-void GuiOscTab::notify()
-{
-    SynthParameters* pParams = pSound->pParams;
-
-    pParams->osc1Waveform.toComboBox(waveformCB1);
-    semiSlider1.setValue(pParams->osc1PitchOffsetSemitones);
-    detuneSlider1.setValue(pParams->osc1DetuneOffsetCents);
-
-    pParams->osc2Waveform.toComboBox(waveformCB2);
-    semiSlider2.setValue(pParams->osc2PitchOffsetSemitones);
-    detuneSlider2.setValue(pParams->osc2DetuneOffsetCents);
-
-    oscBlendSlider.setValue(100.0 * pParams->oscBlend);
 }

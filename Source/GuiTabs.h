@@ -1,6 +1,6 @@
 #pragma once
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "SynthSound.h"
+#include "SynthParameters.h"
 #include "GuiMainTab.h"
 #include "GuiOscTab.h"
 #include "GuiEgTab.h"
@@ -8,13 +8,13 @@
 class GuiTabs  : public Component
 {
 public:
-    GuiTabs (SynthSound* pSynthSound);
+    GuiTabs (SynthParameters_Main& mp, SynthParameters_Osc& op, SynthParameters_AmpEG& aegp);
     ~GuiTabs();
 
     void paint (Graphics& g) override;
     void resized() override;
 
-    void notify();
+    void update();
 
 private:
     ScopedPointer<TabbedComponent> tabbedComponent;

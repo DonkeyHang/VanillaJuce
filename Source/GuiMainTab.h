@@ -1,21 +1,19 @@
 #pragma once
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "SynthSound.h"
+#include "SynthParameters.h"
 
-class GuiMainTab : public Component, public SliderListener
+class GuiMainTab : public Component
 {
 public:
-    GuiMainTab (SynthSound* pSynthSound);
-    ~GuiMainTab();
+    GuiMainTab (SynthParameters_Main& mp);
 
     void paint (Graphics& g) override;
     void resized() override;
-    void sliderValueChanged (Slider* sliderThatWasMoved) override;
 
-    void notify();
+    void update() { mainParams.UpdateControlsFromWorkingValues(); }
 
 private:
-    SynthSound* pSound;
+    SynthParameters_Main& mainParams;
 
     Label masterLevelLabel, pbUpLabel, pbDownLabel;
     Slider masterLevelSlider, pbUpSlider, pbDownSlider;

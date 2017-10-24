@@ -1,21 +1,19 @@
 #pragma once
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "SynthSound.h"
+#include "SynthParameters.h"
 
-class GuiEgTab  : public Component,
-                  public SliderListener
+class GuiEgTab  : public Component
 {
 public:
-    GuiEgTab (SynthSound* pSynthSound);
+    GuiEgTab (SynthParameters_AmpEG& aegp);
 
     void paint (Graphics& g) override;
     void resized() override;
-    void sliderValueChanged (Slider* sliderThatWasMoved) override;
 
-    void notify();
+    void update() { ampEgParams.UpdateControlsFromWorkingValues(); }
 
 private:
-    SynthSound* pSound;
+    SynthParameters_AmpEG& ampEgParams;
 
     Label attackLabel, decayLabel, sustainLabel, releaseLabel;
     Slider attackSlider, decaySlider, sustainSlider, releaseSlider;

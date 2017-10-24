@@ -1,11 +1,11 @@
 #include "GuiEgTab.h"
 
-GuiEgTab::GuiEgTab (SynthSound* pSynthSound)
-    : pSound(pSynthSound)
-    , attackLabel("attack", TRANS("Attack Time (sec)"))
-    , decayLabel("decay", TRANS("Decay Time (sec)"))
-    , sustainLabel("sustain", TRANS("Sustain Level (%)"))
-    , releaseLabel("release", TRANS("Release Time (sec)"))
+GuiEgTab::GuiEgTab (SynthParameters_AmpEG& aegp)
+    : ampEgParams(aegp)
+    , attackLabel(SynthParameters_AmpEG::attack_Name, SynthParameters_AmpEG::attack_Label)
+    , decayLabel(SynthParameters_AmpEG::decay_Name, SynthParameters_AmpEG::decay_Label)
+    , sustainLabel(SynthParameters_AmpEG::sustain_Name, SynthParameters_AmpEG::sustain_Label)
+    , releaseLabel(SynthParameters_AmpEG::release_Name, SynthParameters_AmpEG::release_Label)
 {
     auto initLabel = [this](Label& label)
     {
@@ -27,7 +27,7 @@ GuiEgTab::GuiEgTab (SynthSound* pSynthSound)
         addAndMakeVisible(slider);
         slider.setSliderStyle (Slider::LinearHorizontal);
         slider.setTextBoxStyle (Slider::TextBoxRight, false, 80, 20);
-        slider.addListener (this);
+        slider.addListener(&ampEgParams);
     };
 
     initSlider(attackSlider); attackSlider.setRange (0, 10, 0);
@@ -35,7 +35,8 @@ GuiEgTab::GuiEgTab (SynthSound* pSynthSound)
     initSlider(sustainSlider); sustainSlider.setRange (0, 100, 1);
     initSlider(releaseSlider); releaseSlider.setRange (0, 10, 0);
 
-    notify();
+    ampEgParams.AttachControls(&attackSlider, &decaySlider, &sustainSlider, &releaseSlider);
+    ampEgParams.UpdateControlsFromWorkingValues();
 }
 
 void GuiEgTab::paint (Graphics& g)
@@ -64,24 +65,4 @@ void GuiEgTab::resized()
     top += controlHeight + gapHeight;
     releaseLabel.setBounds (labelLeft, top, labelWidth, controlHeight);
     releaseSlider.setBounds (controlLeft, top, sliderWidth, controlHeight);
-}
-
-void GuiEgTab::sliderValueChanged (Slider* sliderThatWasMoved)
-{
-    float value = (float)(sliderThatWasMoved->getValue());
-    SynthParameters* pParams = pSound->pParams;
-    if (sliderThatWasMoved == &attackSlider) pParams->ampEgAttackTimeSeconds = value;
-    else if (sliderThatWasMoved == &decaySlider) pParams->ampEgDecayTimeSeconds = value;
-    else if (sliderThatWasMoved == &sustainSlider) pParams->ampEgSustainLevel = 0.01f * value;
-    else if (sliderThatWasMoved == &releaseSlider) pParams->ampEgReleaseTimeSeconds = value;
-    pSound->parameterChanged();
-}
-
-void GuiEgTab::notify()
-{
-    SynthParameters* pParams = pSound->pParams;
-    attackSlider.setValue(pParams->ampEgAttackTimeSeconds);
-    decaySlider.setValue(pParams->ampEgDecayTimeSeconds);
-    sustainSlider.setValue(100.0f * pParams->ampEgSustainLevel);
-    releaseSlider.setValue(pParams->ampEgReleaseTimeSeconds);
 }

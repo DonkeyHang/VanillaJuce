@@ -1,24 +1,19 @@
 #pragma once
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "SynthSound.h"
+#include "SynthParameters.h"
 
-class GuiOscTab : public Component,
-                  public ComboBoxListener,
-                  public SliderListener
+class GuiOscTab : public Component
 {
 public:
-    GuiOscTab (SynthSound* pSynthSound);
-    ~GuiOscTab();
+    GuiOscTab (SynthParameters_Osc& op);
 
     void paint (Graphics& g) override;
     void resized() override;
-    void comboBoxChanged (ComboBox* comboBoxThatHasChanged) override;
-    void sliderValueChanged (Slider* sliderThatWasMoved) override;
 
-    void notify();
+    void update() { oscParams.UpdateControlsFromWorkingValues(); }
 
 private:
-    SynthSound* pSound;
+    SynthParameters_Osc& oscParams;
 
     Label wfLabel1, semiLabel1, detuneLabel1;
     ComboBox waveformCB1;

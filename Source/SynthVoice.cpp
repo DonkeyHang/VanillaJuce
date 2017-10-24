@@ -20,12 +20,12 @@ float SynthVoice::pitchBendCents()
     if (pitchBend >= 0.0f)
     {
         // shifting up
-        return pitchBend * pParams->pitchBendUpSemitones * 100;
+        return pitchBend * mainParams.pitchBendUpSemitones * 100;
     }
     else
     {
         // shifting down
-        return pitchBend * pParams->pitchBendDownSemitones * 100;
+        return pitchBend * mainParams.pitchBendDownSemitones * 100;
     }
 }
 
@@ -36,9 +36,11 @@ static double noteHz(int midiNoteNumber, double centsOffset)
     return hertz;
 }
 
-SynthVoice::SynthVoice()
+SynthVoice::SynthVoice(SynthParameters_Main& mp, SynthParameters_Osc& op, SynthParameters_AmpEG& aegp)
     : SynthesiserVoice()
-    , pParams(0)
+    , mainParams(mp)
+    , oscParams(op)
+    , ampEgParams(aegp)
     , noteVelocity(0.0f)
     , pitchBend(0.0f)
     , osc1Level(0.0f)
@@ -53,51 +55,51 @@ void SynthVoice::setup (bool pitchBendOnly)
     double sampleRateHz = getSampleRate();
     int midiNote = getCurrentlyPlayingNote();
 
-    float masterLevel = float(noteVelocity * pParams->masterLevel);
+    float masterLevel = float(noteVelocity * mainParams.masterLevel);
     double pbCents = pitchBendCents();
 
-    double cyclesPerSecond = noteHz(midiNote + pParams->osc1PitchOffsetSemitones, pParams->osc1DetuneOffsetCents + pbCents);
+    double cyclesPerSecond = noteHz(midiNote + oscParams.pitchOffsetSemitones1, oscParams.detuneOffsetCents1 + pbCents);
     double cyclesPerSample = cyclesPerSecond / sampleRateHz;
     osc1.setFrequency(cyclesPerSample);
     if (!pitchBendOnly)
     {
-        osc1.setWaveform(pParams->osc1Waveform);
+        osc1.setWaveform(oscParams.waveform1);
         osc1Level.reset(sampleRateHz, ampEG.isRunning() ? 0.1 : 0.0);
-        osc1Level.setValue(float(pParams->oscBlend * masterLevel));
+        osc1Level.setValue(float(oscParams.oscBlend * masterLevel));
     }
 
-    cyclesPerSecond = noteHz(midiNote + pParams->osc2PitchOffsetSemitones, pParams->osc2DetuneOffsetCents + pbCents);
+    cyclesPerSecond = noteHz(midiNote + oscParams.pitchOffsetSemitones2, oscParams.detuneOffsetCents2 + pbCents);
     cyclesPerSample = cyclesPerSecond / sampleRateHz;
     osc2.setFrequency(cyclesPerSample);
     if (!pitchBendOnly)
     {
-        osc2.setWaveform(pParams->osc2Waveform);
+        osc2.setWaveform(oscParams.waveform2);
         osc2Level.reset(sampleRateHz, ampEG.isRunning() ? 0.1 : 0.0);
-        osc2Level.setValue(float((1.0 - pParams->oscBlend) * masterLevel));
+        osc2Level.setValue(float((1.0 - oscParams.oscBlend) * masterLevel));
     }
 
     if (!pitchBendOnly)
     {
-        ampEG.attackSeconds = pParams->ampEgAttackTimeSeconds;
-        ampEG.decaySeconds = pParams->ampEgDecayTimeSeconds;
-        ampEG.sustainLevel = pParams->ampEgSustainLevel;
-        ampEG.releaseSeconds = pParams->ampEgReleaseTimeSeconds;
+        ampEG.attackSeconds = ampEgParams.attackTimeSeconds;
+        ampEG.decaySeconds = ampEgParams.decayTimeSeconds;
+        ampEG.sustainLevel = ampEgParams.sustainLevel;
+        ampEG.releaseSeconds = ampEgParams.releaseTimeSeconds;
     }
 }
 
 void SynthVoice::soundParameterChanged()
 {
-    if (pParams == 0) return;
     setup(false);
 }
 
 void SynthVoice::startNote(int midiNoteNumber, float velocity, SynthesiserSound* sound, int currentPitchWheelPosition)
 {
-    ignoreUnused(midiNoteNumber);    // accessible as SynthesiserVoice::getCurrentlyPlayingNote();
+    ignoreUnused(midiNoteNumber);    // accessible as SynthesiserVoice::getCurrentlyPlayingNote()
+    ignoreUnused(sound);
+
     tailOff = false;
     noteVelocity = velocity;
 
-    pParams = dynamic_cast<SynthSound*>(sound)->pParams;
     double sampleRateHz = getSampleRate();
     setPitchBend(currentPitchWheelPosition);
 

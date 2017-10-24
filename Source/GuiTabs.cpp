@@ -1,12 +1,12 @@
 #include "GuiTabs.h"
 
-GuiTabs::GuiTabs (SynthSound* pSynthSound)
+GuiTabs::GuiTabs (SynthParameters_Main& mp, SynthParameters_Osc& op, SynthParameters_AmpEG& aegp)
 {
     addAndMakeVisible (tabbedComponent = new TabbedComponent (TabbedButtonBar::TabsAtTop));
     tabbedComponent->setTabBarDepth (32);
-    tabbedComponent->addTab(TRANS("Main"), Colours::lightgrey, pMainTab = new GuiMainTab(pSynthSound), true);
-    tabbedComponent->addTab(TRANS("Osc"), Colours::lightgrey, pOscTab = new GuiOscTab(pSynthSound), true);
-    tabbedComponent->addTab(TRANS("AmpEG"), Colours::lightgrey, pAmpEgTab = new GuiEgTab(pSynthSound), true);
+    tabbedComponent->addTab(TRANS("Main"), Colours::lightgrey, pMainTab = new GuiMainTab(mp), true);
+    tabbedComponent->addTab(TRANS("Osc"), Colours::lightgrey, pOscTab = new GuiOscTab(op), true);
+    tabbedComponent->addTab(TRANS("AmpEG"), Colours::lightgrey, pAmpEgTab = new GuiEgTab(aegp), true);
     tabbedComponent->setCurrentTabIndex(0);
 }
 
@@ -25,9 +25,9 @@ void GuiTabs::resized()
     tabbedComponent->setBounds (0, 0, getWidth(), getWidth());
 }
 
-void GuiTabs::notify()
+void GuiTabs::update()
 {
-    pMainTab->notify();
-    pOscTab->notify();
-    pAmpEgTab->notify();
+    pMainTab->update();
+    pOscTab->update();
+    pAmpEgTab->update();
 }

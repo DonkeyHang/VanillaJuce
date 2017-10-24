@@ -1,11 +1,10 @@
 #include "GuiMainTab.h"
 
-//==============================================================================
-GuiMainTab::GuiMainTab (SynthSound* pSynthSound)
-    : pSound(pSynthSound)
-    , masterLevelLabel("master level", TRANS("Master Volume"))
-    , pbUpLabel("PB up", TRANS("P.Bend up (semi)"))
-    , pbDownLabel("PB down", TRANS("P.Bend down (semi)"))
+GuiMainTab::GuiMainTab (SynthParameters_Main& mp)
+    : mainParams(mp)
+    , masterLevelLabel(SynthParameters_Main::masterLevel_Name, SynthParameters_Main::masterLevel_Label)
+    , pbUpLabel(SynthParameters_Main::pitchBendUpSemitones_Name, SynthParameters_Main::pitchBendUpSemitones_Label)
+    , pbDownLabel(SynthParameters_Main::pitchBendDownSemitones_Name, SynthParameters_Main::pitchBendDownSemitones_Label)
 {
     auto initLabel = [this](Label& label)
     {
@@ -26,21 +25,17 @@ GuiMainTab::GuiMainTab (SynthSound* pSynthSound)
         addAndMakeVisible(slider);
         slider.setSliderStyle(Slider::LinearHorizontal);
         slider.setTextBoxStyle(Slider::TextBoxRight, false, 80, 20);
-        slider.addListener(this);
+        slider.addListener(&mainParams);
     };
 
     initSlider(masterLevelSlider); masterLevelSlider.setRange(0, 10, 0);
     initSlider(pbUpSlider); pbUpSlider.setRange(0, 12, 1);
     initSlider(pbDownSlider); pbDownSlider.setRange(0, 12, 1);
 
-    notify();
+    mainParams.AttachControls(&masterLevelSlider, &pbUpSlider, &pbDownSlider);
+    mainParams.UpdateControlsFromWorkingValues();
 }
 
-GuiMainTab::~GuiMainTab()
-{
-}
-
-//==============================================================================
 void GuiMainTab::paint (Graphics& g)
 {
     g.fillAll (Colour (0xff323e44));
@@ -64,31 +59,4 @@ void GuiMainTab::resized()
     top += controlHeight + gapHeight;
     pbDownLabel.setBounds(labelLeft, top, labelWidth, controlHeight);
     pbDownSlider.setBounds(controlLeft, top, sliderWidth, controlHeight);
-}
-
-void GuiMainTab::sliderValueChanged (Slider* sliderThatWasMoved)
-{
-    float value = (float)(sliderThatWasMoved->getValue());
-    SynthParameters* pParams = pSound->pParams;
-    if (sliderThatWasMoved == &masterLevelSlider)
-    {
-        pParams->masterLevel = 0.1f * value;
-    }
-    else if (sliderThatWasMoved == &pbUpSlider)
-    {
-        pParams->pitchBendUpSemitones = int(value);
-    }
-    else if (sliderThatWasMoved == &pbDownSlider)
-    {
-        pParams->pitchBendDownSemitones = int(value);
-    }
-    pSound->parameterChanged();
-}
-
-void GuiMainTab::notify()
-{
-    SynthParameters* pParams = pSound->pParams;
-    masterLevelSlider.setValue(10.0 * pParams->masterLevel);
-    pbUpSlider.setValue(pParams->pitchBendUpSemitones);
-    pbDownSlider.setValue(pParams->pitchBendDownSemitones);
 }

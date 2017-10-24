@@ -4,7 +4,7 @@
 VanillaJuceAudioProcessorEditor::VanillaJuceAudioProcessorEditor (VanillaJuceAudioProcessor& p)
     : AudioProcessorEditor (&p)
     , processor (p)
-    , guiTabs(p.getSound())
+    , guiTabs(p.mainParams, p.oscParams, p.ampEgParams)
 {
     setSize (600, 300);
     addAndMakeVisible(&guiTabs);
@@ -29,5 +29,5 @@ void VanillaJuceAudioProcessorEditor::resized()
 void VanillaJuceAudioProcessorEditor::changeListenerCallback(ChangeBroadcaster* source)
 {
     ignoreUnused(source);
-    guiTabs.notify();
+    guiTabs.update();
 }

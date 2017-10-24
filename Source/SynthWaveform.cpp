@@ -1,14 +1,12 @@
 #include "SynthWaveform.h"
 
-const char* const SynthWaveform::wfNames[] = {
-    "Sine", "Triangle", "Square", "Sawtooth"
-};
+const StringArray SynthWaveform::names = { "Sine", "Triangle", "Square", "Sawtooth" };
 
 void SynthWaveform::setFromName(String wfName)
 {
     for (int i = 0; i < kNumberOfWaveformTypes; i++)
     {
-        if (wfName == wfNames[i])
+        if (wfName == names[i])
         {
             index = (WaveformTypeIndex)i;
             return;
@@ -21,13 +19,13 @@ void SynthWaveform::setFromName(String wfName)
 
 String SynthWaveform::name()
 {
-    return wfNames[index];
+    return names[index];
 }
 
 void SynthWaveform::setupComboBox(ComboBox& cb)
 {
     for (int i = 0; i < kNumberOfWaveformTypes; i++)
-        cb.addItem(wfNames[i], i + 1);
+        cb.addItem(names[i], i + 1);
 }
 
 void SynthWaveform::fromComboBox(ComboBox& cb)

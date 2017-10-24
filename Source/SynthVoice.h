@@ -1,8 +1,9 @@
 #pragma once
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "SynthSound.h"
 #include "SynthOscillator.h"
 #include "SynthEnvelopeGenerator.h"
+#include "SynthParameters.h"
+#include "SynthSound.h"
 
 class SynthVoice : public SynthesiserVoice
 {
@@ -12,7 +13,9 @@ private:
     SynthEnvelopeGenerator ampEG;
 
     // current sound parameters
-    SynthParameters* pParams;
+    SynthParameters_Main& mainParams;
+    SynthParameters_Osc& oscParams;
+    SynthParameters_AmpEG& ampEgParams;
 
     // voice properties remembered from startNote() call
     float noteVelocity;
@@ -23,7 +26,7 @@ private:
     bool tailOff;
 
 public:
-    SynthVoice();
+    SynthVoice(SynthParameters_Main& mp, SynthParameters_Osc& op, SynthParameters_AmpEG& aegp);
 
     bool canPlaySound(SynthesiserSound* sound) override
     { return dynamic_cast<SynthSound*> (sound) != nullptr; }

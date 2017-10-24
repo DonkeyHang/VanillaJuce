@@ -18,6 +18,9 @@ public:
     // set to default state after construction
     void setToDefault() { index = kSine; }
 
+    // get index as a 0-based integer
+    int getIndex() { return (int)index; }
+
     // serialize: get human-readable name of this waveform
     String name();
 
@@ -29,8 +32,6 @@ public:
     void fromComboBox(ComboBox& cb);
     void toComboBox(ComboBox& cb);
 
-
-private:
     // waveform names: ordered list of string literals
-    static const char* const wfNames[];
+    static const StringArray names;
 };

@@ -3,22 +3,30 @@
 #include "SynthVoice.h"
 
 VanillaJuceAudioProcessor::VanillaJuceAudioProcessor()
-    : currentProgram(0)
+    : mainParams(synth)
+    , oscParams(synth)
+    , ampEgParams(synth)
 {
-    initializePrograms();
+    addParameter(mainParams.pMasterLevel_Param);
+    addParameter(mainParams.pPitchBendUpSemitones_Param);
+    addParameter(mainParams.pPitchBendDownSemitones_Param);
 
+    addParameter(oscParams.pOscBlend_Param);
+    addParameter(oscParams.pWaveform1_Param);
+    addParameter(oscParams.pPitchOffsetSemitones1_Param);
+    addParameter(oscParams.pDetuneOffsetCents1_Param);
+    addParameter(oscParams.pWaveform2_Param);
+    addParameter(oscParams.pPitchOffsetSemitones2_Param);
+    addParameter(oscParams.pDetuneOffsetCents2_Param);
+
+    addParameter(ampEgParams.pAttack_Param);
+    addParameter(ampEgParams.pDecay_Param);
+    addParameter(ampEgParams.pSustain_Param);
+    addParameter(ampEgParams.pRelease_Param);
+
+    synth.addSound(new SynthSound());
     for (int i = 0; i < kNumberOfVoices; ++i)
-        synth.addVoice(new SynthVoice());
-
-    pSound = new SynthSound(synth);
-    pSound->pParams = &programBank[currentProgram];
-    synth.addSound(pSound);
-}
-
-void VanillaJuceAudioProcessor::initializePrograms()
-{
-    for (int i = 0; i < kNumberOfPrograms; i++)
-        programBank[i].setDefaultValues();
+        synth.addVoice(new SynthVoice(mainParams, oscParams, ampEgParams));
 }
 
 const String VanillaJuceAudioProcessor::getName() const
@@ -49,31 +57,18 @@ double VanillaJuceAudioProcessor::getTailLengthSeconds() const
     return 0.0;
 }
 
-int VanillaJuceAudioProcessor::getNumPrograms()
-{
-    return kNumberOfPrograms;
-}
-
-int VanillaJuceAudioProcessor::getCurrentProgram()
-{
-    return currentProgram;
-}
-
-void VanillaJuceAudioProcessor::setCurrentProgram (int index)
-{
-    currentProgram = index;
-    pSound->pParams = &programBank[currentProgram];
-    sendChangeMessage();
-}
-
 const String VanillaJuceAudioProcessor::getProgramName (int index)
 {
-    return programBank[index].programName;
+    ignoreUnused(index);
+
+    return programName;
 }
 
 void VanillaJuceAudioProcessor::changeProgramName (int index, const String& newName)
 {
-    programBank[index].programName = newName;
+    ignoreUnused(index);
+
+    programName = newName;
     sendChangeMessage();
 }
 
@@ -102,48 +97,60 @@ bool VanillaJuceAudioProcessor::hasEditor() const
 
 AudioProcessorEditor* VanillaJuceAudioProcessor::createEditor()
 {
-    return new VanillaJuceAudioProcessorEditor(*this);
+    VanillaJuceAudioProcessorEditor* pEditor = new VanillaJuceAudioProcessorEditor(*this);
+
+    mainParams.UpdateControlsFromWorkingValues();
+    oscParams.UpdateControlsFromWorkingValues();
+    ampEgParams.UpdateControlsFromWorkingValues();
+
+    return pEditor;
 }
 
 void VanillaJuceAudioProcessor::getStateInformation (MemoryBlock& destData)
 {
-    XmlElement xml = XmlElement("VanillaJuce");
-    xml.setAttribute("currentProgram", currentProgram);
-    XmlElement* xprogs = new XmlElement("programs");
-    for (int i = 0; i < kNumberOfPrograms; i++)
-        xprogs->addChildElement(programBank[i].getXml());
-    xml.addChildElement(xprogs);
+    XmlElement xml = XmlElement(JucePlugin_Name);
+    xml.setAttribute("programName", programName);
+    mainParams.putToXml(xml);
+    oscParams.putToXml(xml);
+    ampEgParams.putToXml(xml);
     copyXmlToBinary(xml, destData);
 }
 
 void VanillaJuceAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    ScopedPointer<XmlElement> xml = getXmlFromBinary(data, sizeInBytes);
-    XmlElement* xprogs = xml->getFirstChildElement();
-    if (xprogs->hasTagName("programs"))
+    ScopedPointer<XmlElement> pXml = getXmlFromBinary(data, sizeInBytes);
+    programName = pXml->getStringAttribute("programName");
+    mainParams.getFromXml(pXml); mainParams.UpdateWorkingValuesFromPluginParameters();
+    oscParams.getFromXml(pXml); oscParams.UpdateWorkingValuesFromPluginParameters();
+    ampEgParams.getFromXml(pXml); ampEgParams.UpdateWorkingValuesFromPluginParameters();
+
+    VanillaJuceAudioProcessorEditor* pEditor = (VanillaJuceAudioProcessorEditor*)getActiveEditor();
+    if (pEditor)
     {
-        int i = 0;
-        forEachXmlChildElement(*xprogs, xpr)
-        {
-            programBank[i].setDefaultValues();
-            programBank[i].putXml(xpr);
-            i++;
-        }
+        mainParams.UpdateControlsFromWorkingValues();
+        oscParams.UpdateControlsFromWorkingValues();
+        ampEgParams.UpdateControlsFromWorkingValues();
     }
-    setCurrentProgram(xml->getIntAttribute("currentProgram", 0));
+
 }
 
-void VanillaJuceAudioProcessor::getCurrentProgramStateInformation(MemoryBlock& destData)
+void VanillaJuceAudioProcessor::setParameter(int parameterIndex, float newValue)
 {
-    ScopedPointer<XmlElement> xml = programBank[currentProgram].getXml();
-    copyXmlToBinary(*xml, destData);
-}
+    AudioProcessor::setParameter(parameterIndex, newValue);
 
-void VanillaJuceAudioProcessor::setCurrentProgramStateInformation(const void* data, int sizeInBytes)
-{
-    ScopedPointer<XmlElement> xml = getXmlFromBinary(data, sizeInBytes);
-    programBank[currentProgram].putXml(xml);
-    sendChangeMessage();
+    mainParams.UpdateWorkingValuesFromPluginParameters();
+    oscParams.UpdateWorkingValuesFromPluginParameters();
+    ampEgParams.UpdateWorkingValuesFromPluginParameters();
+
+    VanillaJuceAudioProcessorEditor* pEditor = (VanillaJuceAudioProcessorEditor*)getActiveEditor();
+    if (pEditor)
+    {
+        mainParams.UpdateControlsFromWorkingValues();
+        oscParams.UpdateControlsFromWorkingValues();
+        ampEgParams.UpdateControlsFromWorkingValues();
+    }
+
+    synth.soundParameterChanged();
 }
 
 // This creates new instances of the plugin.

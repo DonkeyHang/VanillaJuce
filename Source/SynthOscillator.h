@@ -1,12 +1,12 @@
 #pragma once
-#include "SynthParameters.h"
+#include "SynthWaveform.h"
 
 class SynthOscillator
 {
 private:
     SynthWaveform waveform;
-    double phase;            // [0.0, 1.0]
-    double phaseDelta;        // cycles per sample (fraction)
+    double phase;           // [0.0, 1.0]
+    double phaseDelta;      // cycles per sample (fraction)
 
 public:
     SynthOscillator() : phase(0), phaseDelta(0) {}

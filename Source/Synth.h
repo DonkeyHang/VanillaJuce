@@ -6,7 +6,6 @@
     automation from the plugin host (DAW).
 */
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "SynthParameters.h"
 
 class Synth : public Synthesiser
 {
